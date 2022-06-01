@@ -1,0 +1,9 @@
+{
+    "booking_ID":1,
+    "company_ID" :1,
+    "cab_Company":"OLA",
+    "amount":500,
+    "source":"Delhi",
+    "destination":"Chandigarh",
+    "date":"2022-05-26"
+  }

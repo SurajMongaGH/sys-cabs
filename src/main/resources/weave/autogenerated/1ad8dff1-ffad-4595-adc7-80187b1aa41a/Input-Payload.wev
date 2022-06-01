@@ -1,0 +1,13 @@
+%dw 2.0
+
+type auto_1ad8dff1_ffad_4595_adc7_80187b1aa41a_Input_Payload = {
+  date: String, 
+  amount: Number, 
+  company_ID: Number, 
+  cab_Company: String, 
+  destination: String, 
+  source: String, 
+  number_Of_Cars_Available: Number, 
+  _?: Any
+}
+

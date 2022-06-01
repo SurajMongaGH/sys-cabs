@@ -1,0 +1,76 @@
+#%RAML 1.0
+title: cab-booking-API
+description: Cab booking API
+protocols: [HTTP,HTTPS]
+types:
+  cabDataTypes: !include datatypes/cabDataTypes.raml
+/cabs:
+  get:
+    description: Fetch all cab details
+    queryParameters:
+      source:
+        type: string
+        required: true
+        example: "Delhi"
+      destination:
+        type: string
+        required: true
+        example: "Patna"
+    responses:
+      200:
+        body:
+          application/json:
+            type: cabDataTypes
+            example: !include examples/getAllCabDetailsExample.json
+            
+  post:
+    description: Add new cab details
+    body:
+      application/json:
+        type: cabDataTypes
+        example: !include examples/newCabAddedExample.json
+    responses:
+      200:
+        body:
+          application/json:
+            example: !include examples/newCabAddedResponseExample.json
+  /{company_ID}:
+    get:
+      description: Fetch Cab details based on company ID
+      responses:
+        200:
+          body:
+            application/json:
+              type: cabDataTypes
+              example: !include examples/getAllCabDetailsExample.json
+    delete:
+      description: Delete Cab Based On ID
+      responses:
+        200:
+          body:
+            application/json:
+              example: !include examples/cabDeletedExample.json
+/bookCab:
+  post:
+    description: Book cab based on required source and Destination
+    body:
+      application/json:
+        example: !include examples/bookCabPostExample.json
+    responses:
+      200:
+        body:
+          application/json:
+            example: !include examples/bookCabResposeExample.json
+
+/bookedCabDetails:
+  /{bookingId}:
+    get:
+      description: Fetch booked cab details
+      responses:
+        200:
+          body:
+            application/json:
+              example: !include examples/bookedCabDetailsExample.json
+   
+              
+    

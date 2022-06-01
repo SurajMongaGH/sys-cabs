@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="bf7b8b4a-6221-4129-bc17-ffdf90882f34" >
+		<db:my-sql-connection host="${secure::db.host}" port="3306" user="${secure::db.user}" password="${secure::db.password}" database="${secure::db.db_name}" />
+	</db:config>
+	<http:listener-config name="cab-booking-api-httpListenerConfig">
+        <http:listener-connection host="${secure::http.host}" port="${secure::http.port}" />
+    </http:listener-config>
+    <apikit:config name="cab-booking-api-config" api="cab-booking-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+	<ftp:config name="FTP_Config" doc:name="FTP Config" doc:id="3d3a6ffa-c538-4758-90fa-01f7513a8aed" >
+		<ftp:connection host="${secure::file.host}" username="${secure::file.user}" password="${secure::file.password}" workingDir="\cabs" connectionTimeoutUnit="MINUTES" responseTimeoutUnit="MINUTES" port="${secure::file.port}"/>
+	</ftp:config>
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="6058bf38-4624-41c8-82da-ca570112ce21" file="config.yaml" key="you-cant-guess-1" />
+	<configuration-properties doc:name="Configuration properties" doc:id="0916a454-b0fe-40fd-8adb-81109969652b" file="config.yaml" />
+	<configuration doc:name="Configuration" doc:id="7dc0c41e-1923-4953-a4c3-b8ee82f8bd76" defaultErrorHandler-ref="globalError_Handler" />
+	<error-handler name="globalError_Handler" doc:id="14005b9f-deda-4854-a911-93dec393a4ac" >
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="75731e82-21b4-4b1a-bc0a-02042c3e6939" type="FTP:ACCESS_DENIED, FTP:CONNECTIVITY, FTP:FILE_ALREADY_EXISTS, FTP:FILE_LOCK, FTP:ILLEGAL_CONTENT, FTP:ILLEGAL_PATH, FTP:RETRY_EXHAUSTED">
+			<set-payload value="FTP server error" doc:name="Set Payload" doc:id="1702bdff-82cc-4e1c-bb0e-49ca101f754d" />
+			<set-variable value="#[500]" doc:name="Set Variable" doc:id="1e7fd366-0f03-44a9-9b93-affce2b7c27b" variableName="httpStatus"/>
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="ddc30cbd-7c60-4350-a442-4449bfcce9e4" type="DB:BAD_SQL_SYNTAX, DB:CONNECTIVITY, DB:QUERY_EXECUTION" >
+			<set-payload value="database error" doc:name="Set Payload" doc:id="cf0cd0db-7035-47d6-bd46-fdbfe3c703a1" />
+			<set-variable value="#[500]" doc:name="Set Variable" doc:id="886c08a1-74c0-4a96-9395-af4d1d6aece7" variableName="httpStatus"/>
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="9c18f453-3ad4-431a-9cbb-c7f1033e2db7" type="ANY">
+			<set-payload value="internal server error" doc:name="Set Payload" doc:id="a192ba40-2479-48b8-9326-31ab5e8d8bbf" />
+			<set-variable value="#[500]" doc:name="Set Variable" doc:id="e011200c-b23f-4443-b8df-aac3df75eb7f" variableName="httpStatus"/>
+		</on-error-continue>
+	</error-handler>
+</mule>

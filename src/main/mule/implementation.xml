@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp" xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd">
+	<flow name="getCabDetails" doc:id="ef90bb15-2586-46a6-b23e-e674c6cc5e74" >
+		<db:select doc:id="79bc23f0-a086-4ce4-b22c-eebdf1857cec" doc:name="getCabDetails" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from cabs where source = :src AND destination = :dest;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'src' : attributes.queryParams.source,
+	'dest' : attributes.queryParams.destination
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="8a36115f-227b-4a21-ae2e-0aa9d8852429" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="if Cab Exists" doc:id="f3e5e691-c5ec-4a9a-8e79-86f96bd117ad" >
+			<when expression="#[sizeOf(payload) as Number == 0]">
+				<set-payload value="No Cabs Found" doc:name="No Cabs Found" doc:id="173fb64d-14bc-4e1c-b884-6be9090cd0a9" />
+			</when>
+			<otherwise >
+				<set-payload value="#[payload]" doc:name="Cab Details" doc:id="fc242d13-651a-4abc-a950-aa6689c2adff" />
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="insertCab" doc:id="1ad8dff1-ffad-4595-adc7-80187b1aa41a" >
+		<db:insert doc:name="Insert" doc:id="0c0b2995-5cf7-481c-9485-6d779fe9fb31" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into cabs values(:company_ID,:cab_Company,:amount,:source,:destination,:number_Of_Cars_Available,:date)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[payload]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Transform Message" doc:id="1267b4ca-abdd-4ba2-bb77-cf8d64bfd37b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message":"Cab details Inserted Successfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="cabDetailsById" doc:id="79b39298-5a38-4c13-9642-a94f63b6a336" >
+		<db:select doc:name="getCabDetailsByID" doc:id="9366a4fe-dec6-46f9-8583-5ca246085ca8" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from cabs where company_ID = :cabCompanyId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'cabCompanyId' : attributes.uriParams.company_ID
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="8a584240-fb64-4429-b18c-df01c12fdb1d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="If cab Exist" doc:id="454aeea1-c123-4c45-8697-fd9a9fb1941c" >
+			<when expression="#[sizeOf(payload) as Number == 0]">
+				<set-payload value="No Cabs Found" doc:name="No Cabs" doc:id="f5e04727-e424-4af7-a6e6-34375809b794" />
+			</when>
+			<otherwise >
+				<set-payload value="#[payload]" doc:name="cab Details" doc:id="edeecc46-aceb-4c2f-9a4c-11c1c7f80cfc" />
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="deletecab" doc:id="471b7810-ef62-4b8f-a688-f5b025185ce0" >
+		<set-variable value="#[attributes.uriParams.company_ID]" doc:name="companyId" doc:id="1e2e69bf-0d58-4432-8bdd-6ccf0136b5f6" variableName="cabCompanyId"/>
+		<db:delete doc:name="deleteCab" doc:id="b3187627-dfac-431f-a379-73e5191dc787" config-ref="Database_Config">
+			<db:sql ><![CDATA[delete from cabs where company_ID = :cabCompanyId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'cabCompanyId' : vars.cabCompanyId
+}]]]></db:input-parameters>
+		</db:delete>
+		<ee:transform doc:name="Transform Message" doc:id="fc092b11-581f-428e-8db9-8637bd66bd99" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message" : "cab deleted succesfully for cab company Id : " ++ vars.cabCompanyId
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="bookcab" doc:id="c5012bee-4241-41d2-8298-4022ea1c938b" >
+		<db:select doc:name="cabInfo" doc:id="2ee808cf-7c77-4608-8383-2e5f472e9f34" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from cabs where company_ID = :cabCompanyId AND date = :date AND number_Of_Cars_Available > 0]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'cabCompanyId' : payload.company_ID,
+	'date' : payload.date
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="cbd475e2-9987-47ae-9e96-45320ed848fa" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload[0]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[payload]" doc:name="Data" doc:id="92849913-b47f-416e-a89f-855709b9c765" variableName="data"/>
+		<choice doc:name="if Cab exists" doc:id="2a754047-21de-46f3-a360-5fb37e8ac746" >
+			<when expression="#[payload == null]">
+				<ee:transform doc:name="Transform Message" doc:id="a7a3f32a-329b-4acc-bbc4-9cec0eb8fb96" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message" : "No Cabs Available. Please try after sometime"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<db:update doc:name="UpdatecabAvaibility" doc:id="047e3284-db69-42c7-aa2d-172fbdb4a82a" config-ref="Database_Config">
+					<db:sql ><![CDATA[update cabs set number_Of_Cars_Available=number_Of_Cars_Available-1 where company_ID = :cabCompanyId]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	'cabCompanyId' : vars.data.company_ID
+}]]]></db:input-parameters>
+				</db:update>
+				<db:insert doc:name="bookCabForpassenger" doc:id="2ca6f8ed-fe4e-4f6c-a2a7-e9324cf44c45" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into cabsBooking values(:booking_ID,:company_ID,:cab_Company,:amount,:source,:destination,:date)]]></db:sql>
+					<db:input-parameters><![CDATA[#[{booking_ID:null} ++ vars.data]]]></db:input-parameters>
+		</db:insert>
+				<db:select doc:name="booking id" doc:id="d008f71c-7cf8-464c-8e9a-17222a3e4b2b" config-ref="Database_Config">
+					<db:sql ><![CDATA[select booking_ID from cabsBooking order By booking_ID desc limit 1]]></db:sql>
+				</db:select>
+				<ee:transform doc:name="Transform Message" doc:id="3b5d9651-c947-482b-9444-ae628552d847" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload[0]]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<ee:transform doc:name="Transform Message" doc:id="9fe55a38-b825-4d77-a210-4b46852064fd" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message" : "Cab booked with Booking Id : " ++ payload.booking_ID
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="bookingDetailsbyBookingID" doc:id="ef1938f5-bc7e-4e4e-87ad-e77596f2dbf1" >
+		<db:select doc:name="Select" doc:id="a85bae23-6f0b-4a01-96c1-2f8c83765679" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from cabsBooking where booking_ID=:bookingID]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{bookingID:attributes.uriParams.bookingId}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Choice" doc:id="4e4ba21c-bcdd-4860-b081-ac55528bf42c" >
+			<when expression="#[sizeOf(payload) == 0]">
+				<ee:transform doc:name="Transform Message" doc:id="578fbef1-41dc-44ea-938b-3e2ce05433d9" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message" : "No data available"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="fcbf4552-aedd-40e6-b65b-a2fb9bd9fb35">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload[0]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="OLA_file" doc:id="3d48d569-48d6-4f3a-b5e4-b3a4219fa347" >
+		<scheduler doc:name="Scheduler" doc:id="0605b535-9a7d-4bec-b2a8-81e565f3ef22" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="2" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</scheduler>
+		<os:retrieve doc:name="Retrieve" doc:id="2ea593c1-eead-4f07-8a2a-8984070bf4ef" key="OLA_ID" target="OLA_ID">
+			<os:default-value ><![CDATA[#[0]]]></os:default-value>
+		</os:retrieve>
+		<db:select doc:name="Select" doc:id="38c11b70-bd5c-427e-989c-f560111f0c7a" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from cabsBooking where cab_Company = 'OLA' AND booking_ID > :OLA_ID]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'OLA_ID' : vars.OLA_ID
+}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Choice" doc:id="62586f05-4a46-48e4-9259-2272cff9124a" >
+			<when expression="#[sizeOf(payload)==0]">
+				<logger level="INFO" doc:name="Logger" doc:id="cd5a002f-7322-4147-b7ed-0c0c32550eb1" message="No data to write"/>
+				<ee:transform doc:name="Transform Message" doc:id="05d7ca22-3edc-4d1a-b7d7-aaffd7890fb7" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="7d06de38-b850-460b-9e2e-1324c8f7dc30">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<set-variable value="#[payload]" doc:name="Set Variable" doc:id="02a77b37-232c-4dc2-9229-8b21d759a31c" variableName="data" />
+				<db:select doc:name="Select" doc:id="4184cc85-1ffe-4f87-b8a1-5c5eacfafd8c" config-ref="Database_Config">
+			<db:sql><![CDATA[select max(booking_ID) from cabsBooking where cab_Company = 'OLA']]></db:sql>
+		</db:select>
+				<ee:transform doc:name="Transform Message" doc:id="40c9ed67-9341-40f8-a09f-e08ccd52bb67">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<set-variable value='#[payload[0]."max(booking_ID)" default 0]' doc:name="Set Variable" doc:id="5f2383c8-5335-468f-83b4-904627137625" variableName="tempBookingId" />
+				<os:store doc:name="Store" doc:id="1f5bf1d0-404b-4d49-80ac-12ea9a69eb45" key="OLA_ID">
+			<os:value><![CDATA[#[vars.tempBookingId]]]></os:value>
+		</os:store>
+				<ftp:write doc:name="Write" doc:id="51a0ccaa-1dc2-458b-9828-114207f9f2d2" config-ref="FTP_Config" path="OLA.csv" mode="APPEND">
+			<reconnect count="3"/>
+					<ftp:content><![CDATA[#[output application/csv header=false
+---
+vars.data]]]></ftp:content>
+		</ftp:write>
+				<logger level="INFO" doc:name="Logger" doc:id="a0062e33-ea9f-497a-b979-c251a65581f2" message='#["OLA File Updated at : " ++ now() as String]' />
+				<ee:transform doc:name="Transform Message" doc:id="2f738b09-9e1a-4063-9992-dd8b4ccae448" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="UBER_File" doc:id="1cd22728-d342-4964-bd44-be11b00a1f2e" >
+		<scheduler doc:name="Copy_of_Scheduler" doc:id="93843f78-8f6e-4c34-8025-8771f236036e" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="2" timeUnit="MINUTES" />
+			</scheduling-strategy>
+		</scheduler>
+		<os:retrieve doc:name="Copy_of_Retrieve" doc:id="94efd3ac-6fb1-401e-9b02-251f07a84138" key="UBER_ID" target="UBER_ID" >
+			<os:default-value ><![CDATA[#[0]]]></os:default-value>
+		</os:retrieve>
+		<db:select doc:name="Copy_of_Select" doc:id="8d7095f7-5ad9-4e66-917d-3da2364b8230" config-ref="Database_Config" >
+			<db:sql ><![CDATA[select * from cabsBooking where cab_Company = 'UBER' AND booking_ID > :UBER_ID]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'UBER_ID' : vars.UBER_ID
+}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Copy_of_Choice" doc:id="159d3316-4f2a-4c77-8863-ea5dc543be15" >
+			<when expression="#[sizeOf(payload)==0]" >
+				<logger level="INFO" doc:name="Copy_of_Logger" doc:id="e63f8105-0bf2-425c-bd4c-423b360f4196" message="No data to write" />
+				<ee:transform doc:name="Copy_of_Transform Message" doc:id="bf2efd80-4e0b-4aa5-a24d-4a80ca998954" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Copy_of_Transform Message" doc:id="ee24f19e-157d-4009-82af-aa7c4badbdea" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="#[payload]" doc:name="Copy_of_Set Variable" doc:id="8b579210-afe3-466a-bc23-626dd48252d0" variableName="data" />
+				<db:select doc:name="Copy_of_Select" doc:id="ed10a6a3-0456-407b-bb43-c845a9afc435" config-ref="Database_Config" >
+					<db:sql ><![CDATA[select max(booking_ID) from cabsBooking where cab_Company = 'UBER']]></db:sql>
+				</db:select>
+				<ee:transform doc:name="Copy_of_Transform Message" doc:id="c433fb14-5832-4921-b5d5-853768e5595a" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value='#[payload[0]."max(booking_ID)" default 0]' doc:name="Copy_of_Set Variable" doc:id="1556bef3-b6f1-4db3-88f1-4d16bb4993ed" variableName="tempBookingId" />
+				<os:store doc:name="Copy_of_Store" doc:id="43510ce0-3a40-4108-afde-ba5986ca42dc" key="UBER_ID" >
+					<os:value ><![CDATA[#[vars.tempBookingId]]]></os:value>
+				</os:store>
+				<ftp:write doc:name="Copy_of_Write" doc:id="ee820314-c3ca-473d-a7c7-f12b982b6594" config-ref="FTP_Config" path="UBER.csv" mode="APPEND" >
+					<reconnect count="3" />
+					<ftp:content ><![CDATA[#[output application/csv header=false
+---
+vars.data]]]></ftp:content>
+				</ftp:write>
+				<logger level="INFO" doc:name="Copy_of_Logger" doc:id="98252e83-96da-40d7-8f60-b784972de5a7" message='#["UBER File Updated at : " ++ now() as String]' />
+				<ee:transform doc:name="Copy_of_Transform Message" doc:id="d1599ef7-9279-49c5-bf57-e5437e431075" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>
