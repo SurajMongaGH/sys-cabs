@@ -581,6 +581,135 @@ assert_expression_payload::main({payload: payload, attributes: attributes, vars:
 			</munit-tools:assert>
 		</munit:validation>
 	</munit:test>
+	<munit:test name="DBError" doc:id="dba4c0ad-b043-4c09-8010-3e14b8c683ab" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Insert" doc:id="e6574ea8-877d-4d26-bb9d-593d5d874f76" processor="db:insert" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="0c0b2995-5cf7-481c-9485-6d779fe9fb31" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="DB:QUERY_EXECUTION" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://insertCabtest\mock_variable_.dwl')]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="c6e7934b-cc20-4be4-b084-3f1c9f43f5e4" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://insertCabtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes value="#[readUrl('classpath://insertCabtest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://insertCabtest\set-event_variable_.dwl')]" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to insertCab" doc:id="a6728b43-f9aa-4222-a746-a3b5c29c0e16" name="insertCab" />
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:assert-that doc:name="Assert that" doc:id="1178d7e4-c472-47a7-b9db-bf878bef2858" expression="#[payload]" is='#[MunitTools::equalTo("database error")]'/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="ANYError" doc:id="d7f109c6-00ad-4858-945d-6afcb1d92b3d" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Insert" doc:id="da158568-4f24-45a5-b7a3-5c7aa39656c5" processor="db:insert" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="0c0b2995-5cf7-481c-9485-6d779fe9fb31" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="ANY" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://insertCabtest\mock_variable_.dwl')]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="34622ca7-3b7e-4bd6-8ab9-98c1e396788f" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://insertCabtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes value="#[readUrl('classpath://insertCabtest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://insertCabtest\set-event_variable_.dwl')]" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to insertCab" doc:id="eec1f391-096a-4d4f-a1f9-fc352146b00c" name="insertCab" />
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that" doc:id="a14bedc7-ac4c-4a97-a2a0-691dea10c883" expression="#[payload]" is='#[MunitTools::equalTo("internal server error")]' />
+		</munit:validation>
+	</munit:test>
+	<munit:test name="FTPError" doc:id="1db8fdf6-ba0b-478f-999e-0c69100a7c1e" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Copy_of_Mock Select" doc:id="60b061a6-e878-4c08-9633-5db16fb70ba4" processor="db:select" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="4184cc85-1ffe-4f87-b8a1-5c5eacfafd8c" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/java --- readUrl('classpath://OLAfiletest1\mock_payload.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="data" value="#[output application/json --- readUrl('classpath://OLAfiletest1\mock_variable_.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="OLA_ID" value="#[output application/json --- readUrl('classpath://OLAfiletest1\mock_variable_1.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Copy_of_Mock Retrieve" doc:id="c073eca3-df92-45ac-8500-5760684d4339" processor="os:retrieve" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="2ea593c1-eead-4f07-8a2a-8984070bf4ef" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[readUrl('classpath://OLAfiletest1\mock_payload1.dwl')]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="OLA_ID" value="#[output application/json --- readUrl('classpath://OLAfiletest1\mock_variable_2.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Copy_of_Mock Select" doc:id="af534eca-e30c-48c0-a345-ab170bd2b033" processor="db:select" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="38c11b70-bd5c-427e-989c-f560111f0c7a" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/java --- readUrl('classpath://OLAfiletest1\mock_payload2.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="OLA_ID" value="#[output application/json --- readUrl('classpath://OLAfiletest1\mock_variable_3.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Copy_of_Mock Store" doc:id="7bad0c02-292a-475a-a960-e9bb5250b314" processor="os:store" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="1f5bf1d0-404b-4d49-80ac-12ea9a69eb45" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json --- readUrl('classpath://OLAfiletest1\mock_payload3.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="data" value="#[output application/json --- readUrl('classpath://OLAfiletest1\mock_variable_4.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="OLA_ID" value="#[output application/json --- readUrl('classpath://OLAfiletest1\mock_variable_5.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="tempBookingId" value="#[output application/json --- readUrl('classpath://OLAfiletest1\mock_variable_6.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Copy_of_Mock Write" doc:id="9dd8d05f-160d-43d9-b5f8-2da8c4b2d55c" processor="ftp:write" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="51a0ccaa-1dc2-458b-9828-114207f9f2d2" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="FTP:ACCESS_DENIED" />
+					<munit-tools:variables >
+						<munit-tools:variable key="data" value="#[output application/json --- readUrl('classpath://OLAfiletest1\mock_variable_7.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="OLA_ID" value="#[output application/json --- readUrl('classpath://OLAfiletest1\mock_variable_8.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="tempBookingId" value="#[output application/json --- readUrl('classpath://OLAfiletest1\mock_variable_9.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Copy_of_Set Input" doc:id="fd889a80-249e-4e08-a883-22eee38093b7" >
+				<munit:payload value="#[readUrl('classpath://OLAfiletest1\set-event_payload.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Copy_of_Flow-ref to OLA_file" doc:id="b33869ca-707d-4b11-aa0b-cf4cf5a76119" name="OLA_file" />
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:assert-that doc:name="Assert that" doc:id="7d2fcaf7-4554-44bd-9a00-c5260e7ee7fd" expression="#[payload]" is='#[MunitTools::equalTo("FTP server error")]'/>
+		</munit:validation>
+	</munit:test>
 
 
 </mule>
